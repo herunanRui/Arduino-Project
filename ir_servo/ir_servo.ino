@@ -17,7 +17,7 @@ int irSensorPin3 = 4;
 // Define a variable to count the number of detections
 int detectionCount = 0;
 // Set the value of every plastic inserted
-int plasticValue = 0;
+float plasticValue = 0.0;
 
 // Define the pins for capacitive proximity sensor
 int inductiveSensorPin = 7;
@@ -25,6 +25,8 @@ int inductiveSensorPin = 7;
 int servo1Pin = 6; 
 //for opening the return path
 int servo2Pin = 5; 
+
+int butClaim = 8;
 
 
 #define I2C_ADDR 0x27
@@ -72,6 +74,8 @@ void setup() {
   servo1.attach(servo1Pin); // Attach servo1 to pin
 
   servo2.attach(servo2Pin); // Attach servo2 to pin
+
+  pinMode(butClaim, INPUT_PULLUP);
   
   // Initialize the I2C interface
   Wire.begin();
@@ -88,12 +92,13 @@ void setup() {
 
 void loop() {
 
-  // Read the IR sensor value
+  // Read the IR and inductive sensor sensor value
   int irSensorValue = digitalRead(irSensorPin);
   int irSensorValue2 = digitalRead(irSensorPin2); 
   int irSensorValue3 = digitalRead(irSensorPin3); 
   int inductiveValue = digitalRead(inductiveSensorPin);
   
+  int butClaimVal = digitalRead(butClaim);
   // If the IR sensor detects an object
   if (irSensorValue == LOW) {
         
@@ -105,30 +110,36 @@ void loop() {
         lcd.clear();
         lcd.setCursor(2, 0);
         lcd.print("Please Wait");
-        lcd.setCursor(2, 1);
+        lcd.setCursor(3, 1);
         lcd.print("for awhile");
-        delay(2000);
+        delay(1500);
 
-        if (inductiveValue == HIGH) {
+        if (inductiveValue == LOW) {
         // Increment the detection count
         detectionCount++;
 
             if (irSensorValue == LOW && irSensorValue2 == HIGH && irSensorValue3 == HIGH) {
-              plasticValue+2;
+              plasticValue+=0.12;
             }
             else if (irSensorValue == LOW && irSensorValue2 == LOW && irSensorValue3 == HIGH) {
-              plasticValue+3;
+              plasticValue+=0.20;
             }
             else if (irSensorValue == LOW && irSensorValue2 == LOW && irSensorValue3 == LOW) {
-              plasticValue+4;
+              plasticValue+=0.35;
             }
             else{
             }
           
         // move the servo to open the container
-        delay(3000);
+        delay(1500);
+
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Verified");
+        delay(500);
+
         servo1.write(120);
-        delay(1000);
+        delay(1500);
 
         digitalWrite(LED_BUILTIN, HIGH);
 
@@ -147,17 +158,21 @@ void loop() {
         lcd.print(detectionCount);
 
         lcd.setCursor(0, 1);
-        lcd.print("Total Value: ");
-        lcd.setCursor(12, 0);
+        lcd.print("Total Point: ");
+        lcd.setCursor(12, 1);
         lcd.print(plasticValue);
-        delay(250); 
+        delay(500); 
+
+        servo1.write(0);
+        delay(1500);
         }
 
-        else if (inductiveValue == LOW) {
+
+        else if (inductiveValue == HIGH) {
         // move the servo motors
-        delay(3000);
-        servo2.write(120);
         delay(1000);
+        servo2.write(120);
+        delay(2000);
         servo1.write(120);
 
         digitalWrite(LED_BUILTIN, HIGH);
@@ -172,6 +187,10 @@ void loop() {
         lcd.print("Invalid");
         delay(1500);
 
+        servo2.write(0);
+        delay(500);
+        servo1.write(0);
+
         lcd.clear();
         lcd.setCursor(2, 0);
         lcd.print("Please Try");
@@ -184,10 +203,53 @@ void loop() {
         lcd.print("Please insert");
         lcd.setCursor(0, 1);
         lcd.print("Plastic Bottle");
+        delay(500);
+        }
+        else {
+
         }
    
   }
   else {
+      if ( butClaimVal == LOW) {
+            delay(500);
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Are you sure you");
+            lcd.setCursor(0, 1);
+            lcd.print("want to Donate?");
+            delay(1000);
+
+              if (butClaimVal == HIGH) {
+              lcd.clear();
+              lcd.setCursor(0, 0);
+              lcd.print("Thank You");
+              lcd.setCursor(0, 1);
+              lcd.print("Very MUCH!!");
+              delay(1000);
+              plasticValue = 0;
+              detectionCount = 0;
+              return;
+              }
+
+              else if (butClaimVal == LOW) {
+              delay(500);
+              lcd.clear();
+              lcd.setCursor(0, 0);
+              lcd.print("Thank You");
+              lcd.setCursor(0, 1);
+              lcd.print("Very MUCH!!");
+              delay(1000);
+              lcd.clear();
+              plasticValue = 0;
+              detectionCount = 0;
+              return;
+              }
+
+          }
+          else {
+            
+          }
     // wala munang gagawin and system
     delay(3000);
     servo2.write(0);
